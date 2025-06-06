@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line Graph with Horizontal Scroll Bar</title>
+<style>
+    .graph-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        overflow-x: auto; /* Enable horizontal scrollbar */
+        white-space: nowrap;
+        overflow-y: hidden; /* Hide vertical scrollbar */
+    }
+
+    .graph {
+        width: 2000px; /* Width should be wider than the container to enable scrolling */
+        /* Additional styling for the line graph */
+    }
+
+    .scroll-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 20px; /* Adjust height as needed */
+        background-color: #f0f0f0;
+    }
+
+    .scroll-handle {
+        position: absolute;
+        width: 100px; /* Adjust handle width */
+        height: 100%;
+        background-color: #ccc;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<div class="graph-container">
+    <div class="graph">
+        <!-- Replace this with your line graph -->
+        <svg width="2000" height="300">
+            <!-- Your line graph elements go here -->
+        </svg>
+    </div>
+    <div class="scroll-bar">
+        <div class="scroll-handle"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const graphContainer = document.querySelector('.graph-container');
+    const scrollBar = document.querySelector('.scroll-bar');
+    const scrollHandle = document.querySelector('.scroll-handle');
+
+    scrollHandle.addEventListener('mousedown', function(event) {
+        event.preventDefault();
+        const initialX = event.clientX - scrollHandle.offsetLeft;
+
+        document.addEventListener('mousemove', moveHandle);
+        document.addEventListener('mouseup', () => {
+            document.removeEventListener('mousemove', moveHandle);
+        });
+
+        function moveHandle(event) {
+            const newX = event.clientX - initialX;
+            const maxScroll = scrollBar.offsetWidth - scrollHandle.offsetWidth;
+            const scrollPercent = newX / maxScroll;
+            graphContainer.scrollLeft = scrollPercent * (graphContainer.scrollWidth - graphContainer.clientWidth);
+            scrollHandle.style.left = Math.min(maxScroll, Math.max(0, newX)) + 'px';
+        }
+    });
+});
+</script>
+
+</body>
+</html>

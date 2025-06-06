@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* CSS for container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto; /* Enable horizontal scrollbar */
+            white-space: nowrap; /* Prevent graph from wrapping */
+            position: relative; /* Position relative for scroll bar positioning */
+        }
+
+        /* CSS for the scroll bar */
+        .scroll-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px; /* Adjust height as needed */
+            background-color: #f0f0f0;
+            border-radius: 4px; /* Rounded corners */
+            overflow: hidden; /* Hide overflow */
+        }
+
+        .scroll-handle {
+            position: absolute;
+            width: 40px; /* Adjust handle width */
+            height: 100%;
+            background-color: #ccc;
+            cursor: pointer;
+            border-radius: 4px; /* Rounded corners */
+        }
+
+        /* Hide default scrollbar */
+        .container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* CSS for other elements */
+        .faculty-details-button {
+            padding: 10px 20px;
+            background-color: #45a049;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .faculty-details-button:hover {
+            background-color: #45a049;
+        }
+
+        .faculty-details-link {
+            position: absolute;
+            top: 45px;
+            right: 50px;
+            text-decoration: none;
+        }
+
+        .filter-dropdown {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-dropdown label {
+            margin-right: 10px;
+        }
+
+        .filter-dropdown select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .filter-dropdown button {
+            padding: 8px 15px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="facultyListHeading">Faculty Statistics</h1> 
+        <div class="filter-dropdown">
+            <label for="filterType">Select Filter Type:</label>
+            <select id="filterType">
+                <option value="criteria">Claimed</option>
+                <option value="target">Target</option>
+                <option value="awarded">Awarded</option>
+            </select>
+            
+            <button onclick="applyFilter()">Apply Filter</button>
+        </div>
+        <a class="faculty-details-link" onclick="redirectToDeptPage()">
+            <button class="faculty-details-button">Faculty Details</button>
+        </a>
+        <canvas id="lineGraph"></canvas>
+        <!-- Scroll bar -->
+        <div class="scroll-bar">
+            <div class="scroll-handle"></div>
+        </div>
+    </div>
+
+    <!-- Include your dashboard.js script -->
+    <script src="dashboard.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var hod = localStorage.getItem('hod');
+           /* if(hod === '0'){
+                alert('Proofs undergoing validation. Cannot access at the moment');
+                window.location.href = 'login.html';
+                return;
+            }*/
+            fetchData('criteria');
+
+        });
+        
+        let lineGraph; // Declare a variable to store the chart instance
+        
+        function fetchData(filter = '') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dept = urlParams.get('dept');
+            fetch(`http://103.159.251.181:5000/getDeptStats?dept=${dept}&filter=${filter}`)
+                .then(response => response.json())
+                .then(data => {
+                    plotLineGraph(data);
+                    updateHeading(dept);
+                    addScrollBar(); // Add scroll bar after plotting graph
+                })
+                .catch(error => {
+                    console.error('Error fetching department details:', error.message);
+                });
+        }
+
+        function applyFilter() {
+            const filterType = document.getElementById('filterType').value;
+            let filter = '';
+
+            if (filterType === 'criteria') {
+                filter = 'criteria';
+            } else if (filterType === 'target') {
+                filter = 'target';
+            } else if (filterType === 'awarded') {
+                filter = 'awarded';
+            }
+
+            fetchData(filter);
+        }
+
+        function plotLineGraph(data) {
+            const ctx = document.getElementById('lineGraph').getContext('2d');
+            const labels = data.users.map(user => user.name);
+            const targetData = data.users.map(user => user.tTotal);
+            const criteriaData = data.users.map(user => user.cTotal || 0);
+            const awardedData = data.users.map(user => user.aTotal || 0); // Handling null values for criteria
+
+            if (lineGraph) {
+                // If a chart instance already exists, destroy it
+                lineGraph.destroy();
+            }
+
+            lineGraph = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Target',
+                        data: targetData,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        fill: false
+                    }, {
+                        label: 'Claimed',
+                        data: criteriaData,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false
+                    }, {
+                        label: 'Awarded',
+                        data: awardedData,
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: 'Faculty Target, Claimed and Awarded'
+                    },
+                    scales: {
+                        xAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'NAME'
+                            }
+                        }],
+                        yAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Value'
+                            }
+                        }]
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: 'x',
+                        onPan: function({chart}) {
+                            const currentRange = chart.options.scales.xAxes[0].ticks;
+                            const maxVisibleItems = Math.floor(chart.chart.width / 50); // Assuming each point takes 50px width
+                            const currentStart = Math.max(0, currentRange.min);
+                            const currentEnd = Math.min(labels.length, currentRange.max);
+                            if (currentEnd === labels.length) return; // No need to pan further
+                            const newStart = Math.max(0, currentStart - maxVisibleItems);
+                            const newEnd = Math.min(labels.length, currentEnd - maxVisibleItems);
+                            chart.options.scales.xAxes[0].ticks.min = newStart;
+                            chart.options.scales.xAxes[0].ticks.max = newEnd;
+                            chart.update({duration: 0});
+                        }
+                    },
+                    zoom: {
+                        enabled: true,
+                        mode: 'x',
+                        rangeMin: {
+                            x: 0
+                        },
+                        rangeMax: {
+                            x: labels.length
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHeading(department) {
+            const facultyListHeading = document.getElementById('facultyListHeading');
+            facultyListHeading.textContent = `Faculty List of ${department}`; // Update heading with department name
+        }
+
+        function redirectToDeptPage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dept = urlParams.get('dept');
+            window.location.href = `dept.html?dept=${dept}`;
+        }
+
+        function addScrollBar() {
+            const container = document.querySelector('.container');
+            const scrollBar = document.createElement('div');
+            scrollBar.classList.add('scroll-bar');
+            scrollBar.innerHTML = '<div class="scroll-handle"></div>';
+            container.appendChild(scrollBar);
+
+            const scrollHandle = scrollBar.querySelector('.scroll-handle');
+            const graphCanvas = document.getElementById('lineGraph');
+
+            const handleWidth = container.clientWidth * (container.clientWidth / graphCanvas.scrollWidth);
+            scrollHandle.style.width = Math.min(40, handleWidth) + 'px'; // Adjust handle width
+            scrollHandle.style.left = (container.scrollLeft / graphCanvas.scrollWidth) * (container.clientWidth - parseInt(scrollHandle.style.width)) + 'px';
+
+            container.addEventListener('scroll', function() {
+                scrollHandle.style.left = (container.scrollLeft / graphCanvas.scrollWidth) * (container.clientWidth - parseInt(scrollHandle.style.width)) + 'px';
+            });
+
+            scrollHandle.addEventListener('mousedown', function (event) {
+                event.preventDefault();
+                const initialX = event.clientX - scrollHandle.offsetLeft;
+
+                document.addEventListener('mousemove', moveHandle);
+                document.addEventListener('mouseup', () => {
+                    document.removeEventListener('mousemove', moveHandle);
+                });
+
+                function moveHandle(event) {
+                    const newX = event.clientX - initialX;
+                    const maxScroll = container.offsetWidth - parseInt(scrollHandle.style.width);
+                    const scrollPercent = newX / maxScroll;
+                    container.scrollLeft = scrollPercent * (graphCanvas.scrollWidth - container.clientWidth);
+                    scrollHandle.style.left = Math.min(maxScroll, Math.max(0, newX)) + 'px';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        #container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px; /* Add margin between the elements */
+        }
+
+        #tableContainer,
+        #graphContainer {
+            flex-basis: 48%; /* Set the width of each container */
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 50px; /* Add margin at the bottom */
+            width: 100%; /* Make the table fill its container */
+            margin-bottom: 10px; /* Add margin at the bottom */
+        }
+        #apercentageDisplay {
+            margin-bottom: 20px; /* Add margin at the bottom */
+            font-size: 20px;
+            font-weight: bold;
+            font-style: italic;
+            text-align: center;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #percentageDisplay {
+            margin-bottom: 20px; /* Add margin at the bottom */
+            font-size: 20px;
+            font-weight: bold;
+            font-style: italic;
+            text-align: center;
+        }
+
+        #doubleBarGraph {
+            margin-top: 50px;
+            max-width: 100%; /* Ensure the graph doesn't overflow its container */
+            height: auto; /* Allow the graph to adjust its height */
+        }
+    </style>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Criteria 2 Summary</h1>
+    <h2 id="percentageDisplay"></h2>
+    <!-- <h2 id="apercentageDisplay"></h2> <br> -->
+
+    <div id="container">
+        <div id="tableContainer">
+
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Criteria</th>
+                        <th>Maximum Marks</th>
+                        <th>Target Score</th>
+                        <th>Claimed Score</th>
+                        <th>Awarded Score</th>
+
+                    </tr>
+                </thead>
+                <tbody></tbody> <!-- Added tbody for dynamically updating rows -->
+            </table>
+        </div>
+        <div id="graphContainer">
+            <canvas id="doubleBarGraph"></canvas>
+        </div>
+    </div>
+
+    <!-- Double Bar Graph -->
+    <canvas id="doubleBarGraph" width="400" height="200"></canvas>
+
+    <!-- Include your dashboard.js script -->
+    <script src="dashboard.js"></script>
+
+    <script>
+       /* document.addEventListener('DOMContentLoaded', async function () {
+            var hod = localStorage.getItem('hod');
+            if(hod === 0){
+                alert('Proofs undergoing validation. Cannot access at the moment');
+                window.location.href = 'login.html';
+                return;
+            }
+    });*/
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        console.log('ID extracted from URL:', userId);    
+        const name = urlParams.get('name');
+
+        const h1Element = document.querySelector('h1');
+        if (name) {
+            h1Element.textContent = `Criteria 2 Summary of ${name}`;
+        } else {
+            h1Element.textContent = `Criteria 2 Summary`;
+        }        document.addEventListener('DOMContentLoaded', function () {
+            // Fetch data from the server
+            fetch(`http://103.159.251.181:5000/getData?criteriaLabels=c21,c22,c23,c24,c25,c26,c27,c28,c29&userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update the table
+                    updateTable(data);
+
+                    // Update the chart
+                    updateChart(data);
+                    calculatePercentage(userId);
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing data:', error.message);
+                });
+        });
+        
+
+        function updateTable(data) {
+    const tableBody = document.querySelector('table tbody');
+
+    // Clear existing rows
+    tableBody.innerHTML = '';
+
+    const maxScores = [20, 5, 10, 14, 5, 10,4,4,3];
+    let totalMaxScores = 0;
+    let totalTargetScores = 0;
+    let totalYourScores = 0;
+    let totalAwardedScores = 0;
+    let i = 0;
+
+    // Populate the table with data
+    data.criteriaLabels.forEach(label => {
+        const row = tableBody.insertRow();
+        const maxScore = maxScores[i++];
+        const targetScore = data.targetScores[data.criteriaLabels.indexOf(label)];
+        const yourScore = data.yourScores[data.criteriaLabels.indexOf(label)];
+        const awardedScore = data.awardScores[data.criteriaLabels.indexOf(label)];
+
+        row.insertCell(0).textContent = label;
+        row.insertCell(1).textContent = maxScore;
+        row.insertCell(2).textContent = targetScore;
+        row.insertCell(3).textContent = yourScore;
+        row.insertCell(4).textContent = awardedScore;
+
+        totalMaxScores += maxScore;
+        totalTargetScores += targetScore;
+        totalYourScores += yourScore;
+        totalAwardedScores += awardedScore;
+    });
+
+    // Add total row at the bottom
+    const totalRow = tableBody.insertRow();
+    totalRow.insertCell(0).textContent = 'Total';
+    totalRow.insertCell(1).textContent = totalMaxScores;
+    totalRow.insertCell(2).textContent = totalTargetScores;
+    totalRow.insertCell(3).textContent = totalYourScores;
+    totalRow.insertCell(4).textContent = totalAwardedScores;
+}
+
+
+        function updateChart(data) {
+            const ctx = document.getElementById('doubleBarGraph').getContext('2d');
+
+            // Create a double bar chart
+            const doubleBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.criteriaLabels,
+                    datasets: [
+                    {
+                        label: 'Target Score',
+                        data: data.targetScores,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)', // Reddish color
+                        borderColor: 'rgba(255, 99, 132, 1)', // Reddish color
+                        borderWidth: 1,
+                    },
+                   {
+                        label: 'Claimed Score',
+                        data: data.yourScores,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)', // Greenish color
+                        borderColor: 'rgba(75, 192, 192, 1)', // Greenish color
+                        borderWidth: 1,
+                    },
+                    {
+                        label: 'Awarded Score',
+                        data: data.awardScores,
+                        backgroundColor: 'rgba(255, 206, 86, 0.2)', // Greenish color
+                        borderColor: 'rgba(255, 206, 86, 1)', // Greenish color
+                        borderWidth: 1,
+                    },
+                    ],
+                },
+            });
+        }
+      
+        function calculatePercentage(userId){
+            fetch(`http://103.159.251.181:5000/getPercentage?userId=${userId}&columnName=c2`)
+                .then(response => response.json())
+                .then(data => {
+                    let percentage = data.percentage || 0;
+                    let apercentage = data.apercentage || 0;
+                    if (percentage > 100) {
+                        percentage = 100;
+                    }
+                    const percentageDisplay = document.getElementById('percentageDisplay');
+                    percentageDisplay.textContent = `Percentage of target attainment : ${percentage.toFixed(2)}%`;
+
+                    if (apercentage > 100) {
+                        apercentage = 100;
+                    }
+                    const apercentageDisplay = document.getElementById('apercentageDisplay');
+                    apercentageDisplay.textContent = `Percentage of target attainment : ${apercentage.toFixed(2)}%`;
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing data:', error.message);
+                });
+                
+        }
+    
+    
+    </script>
+</body>
+</html>

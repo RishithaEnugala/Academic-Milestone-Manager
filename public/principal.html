@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      background-color: #fafaf6; /* Light beige background color */
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-size: 100% 25%;
+      background-position: center top;
+    }
+
+    header {
+      color: #ffffff;
+      text-align: center;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      height: 80px;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      margin-top: 50px; /* Adjusted margin to reduce distance */
+      height: 100vh;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 20px;
+    }
+
+    button {
+      background-color: #409b43;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-right: 15px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0a5811;
+    }
+
+    .buttons a {
+      color: white;
+      padding: 3px 3px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .criteria-box {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f4f4f4;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      text-decoration: none;
+    }
+
+    .criteria-box a {
+      color: white;
+      padding: 3px 3px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .criteria-box.active {
+      display: block;
+    }
+
+    table {
+      width: 80%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    .filter-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .filter-container select,
+    .filter-container button {
+      padding: 10px;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1><center>Departments</center></h1>
+<div class="container">
+  <div class="buttons">
+    <button id="CSE">CSE</button>
+    <button id="AIML">AIML</button>
+    <button id="IT">IT</button>
+    <button id="ECE">ECE</button>
+    <button id="EEE">EEE</button>
+    <button id="BS&H">BS&H</button>
+  </div>
+  
+  <h1>Department wise Statistics</h1>
+
+  <div class="filter-container">
+    <select id="filterCriteria">
+      <option value="Criteria" selected>Claimed</option>
+      <option value="Target">Target</option>
+      <option value="Awarded">Awarded</option>
+    </select>
+    <button id="applyFilter">Apply</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Department</th>
+        <th>Target Stats</th>
+        <th>Claimed Stats</th>
+        <th>Awarded Stats</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-dept="CSE">
+        <td>CSE</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr data-dept="ECE">
+        <td>ECE</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr data-dept="IT">
+        <td>IT</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr data-dept="AIML">
+        <td>AIML</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr data-dept="EEE">
+        <td>EEE</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr data-dept="BSH">
+        <td>BS&H</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr data-dept="Total">
+        <td>Total</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  <strong>
+  <p> Target Stats: Number of faculty who set the target
+    <br>Claimed Stats: Number of faculty who have uploaded the proofs<br>
+    Awarded Stats: Number of faculty whose proofs were verified
+  </p></strong>
+</div>
+
+<script>
+  document.getElementById('CSE').addEventListener('click', function() {
+    window.location.href = 'deptStats.html?dept=CSE';
+  });
+
+  document.getElementById('AIML').addEventListener('click', function() {
+    window.location.href = 'deptStats.html?dept=AIML';
+  });
+
+  document.getElementById('IT').addEventListener('click', function() {
+    window.location.href = 'deptStats.html?dept=IT';
+  });
+
+  document.getElementById('ECE').addEventListener('click', function() {
+    window.location.href = 'deptStats.html?dept=ECE';
+  });
+
+  document.getElementById('EEE').addEventListener('click', function() {
+    window.location.href = 'deptStats.html?dept=EEE';
+  });
+
+  document.getElementById('BS&H').addEventListener('click', function() {
+    window.location.href = 'deptStats.html?dept=BSH';
+  });
+
+  function updateTable(departmentStats) {
+    let totalTarget = 0;
+    let totalCriteria = 0;
+    let totalAwarded = 0;
+
+    // Loop through each department in the received data
+    Object.keys(departmentStats).forEach(dept => {
+      // Find the table row corresponding to the current department
+      let row = document.querySelector(`tr[data-dept="${dept}"]`);
+
+      // If the row doesn't exist, create a new row
+      if (!row) {
+        row = document.createElement('tr');
+        row.setAttribute('data-dept', dept);
+        document.querySelector('tbody').appendChild(row);
+      }
+
+      // Update the table cells with the values from the received data
+      const target = departmentStats[dept].Target;
+      const criteria = departmentStats[dept].Criteria;
+      const awarded = departmentStats[dept].Awarded;
+
+      row.innerHTML = `
+        <td>${dept}</td>
+        <td>${target}</td>
+        <td>${criteria}</td>
+        <td>${awarded}</td>
+      `;
+
+      // Add to the totals
+      totalTarget += parseFloat(target) || 0;
+      totalCriteria += parseFloat(criteria) || 0;
+      totalAwarded += parseFloat(awarded) || 0;
+    });
+
+    // Update the total row
+    const totalRow = document.querySelector('tr[data-dept="Total"]');
+    totalRow.innerHTML = `
+      <td>Total</td>
+      <td>${totalTarget}</td>
+      <td>${totalCriteria}</td>
+      <td>${totalAwarded}</td>
+    `;
+  }
+
+  function sortTableByColumn(columnIndex) {
+    const tbody = document.querySelector('tbody');
+    const rowsArray = Array.from(tbody.querySelectorAll('tr[data-dept]'));
+
+    // Separate the total row from other rows
+    const totalRow = rowsArray.find(row => row.getAttribute('data-dept') === 'Total');
+    const otherRows = rowsArray.filter(row => row.getAttribute('data-dept') !== 'Total');
+
+    otherRows.sort((a, b) => {
+      const aValue = parseFloat(a.cells[columnIndex].textContent) || 0;
+      const bValue = parseFloat(b.cells[columnIndex].textContent) || 0;
+      return bValue - aValue;
+    });
+
+    // Append the sorted rows and then the total row
+    otherRows.forEach(row => tbody.appendChild(row));
+    tbody.appendChild(totalRow);
+  }
+
+  function applyDefaultFilter() {
+    const defaultCriteria = document.getElementById('filterCriteria').value;
+    let columnIndex;
+    if (defaultCriteria === 'Criteria') {
+      columnIndex = 2;
+    } else if (defaultCriteria === 'Target') {
+      columnIndex = 1;
+    } else if (defaultCriteria === 'Awarded') {
+      columnIndex = 3;
+    }
+    sortTableByColumn(columnIndex);
+  }
+
+  document.getElementById('applyFilter').addEventListener('click', () => {
+    applyDefaultFilter();
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fetch(`http://103.159.251.181:5000/getStatsToP`)
+      .then(response => response.json())
+      .then(data => {
+        updateTable(data);
+        applyDefaultFilter(); // Apply the default filter after the table is updated
+      })
+      .catch(error => {
+        console.error('Error fetching department details:', error.message);
+      });
+  });
+</script>
+
+</body>
+</html>

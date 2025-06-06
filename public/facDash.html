@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        #container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px; /* Add margin between the elements */
+        }
+
+        #tableContainer,
+        #graphContainer {
+            flex-basis: 48%; /* Set the width of each container */
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 50px; /* Add margin at the bottom */
+            width: 100%; /* Make the table fill its container */
+            margin-bottom: 10px; /* Add margin at the bottom */
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #percentageDisplay {
+            margin-bottom: 20px; /* Add margin at the bottom */
+            font-size: 28px;
+            font-weight: bold;
+            font-style: italic;
+            text-align: center;
+        }
+        #apercentageDisplay {
+            margin-bottom: 20px; /* Add margin at the bottom */
+            font-size: 28px;
+            font-weight: bold;
+            font-style: italic;
+            text-align: center;
+        }
+
+        #doubleBarGraph {
+            margin-top: 50px;
+            max-width: 100%; /* Ensure the graph doesn't overflow its container */
+            height: auto; /* Allow the graph to adjust its height */
+        }
+        #proofsButton {
+            margin-top: 20px;
+        }
+    </style>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Criteria Summary</h1>
+    <h2 id="percentageDisplay"></h2>
+    <!-- <h2 id="apercentageDisplay"></h2> -->
+
+    <div id="container">
+        <div id="tableContainer">
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Criteria</th>
+                        <th>Maximum Marks</th>
+                        <th>Target Score</th>
+                        <th>Claimed Score</th>
+                        <th>Awarded Score</th>
+                        <th>Section Dashboard</th>
+                    </tr>
+                </thead>
+                <tbody></tbody> <!-- Added tbody for dynamically updating rows -->
+            </table>
+        </div>
+
+        <!-- Double Bar Graph -->
+        <div id="graphContainer">
+            <canvas id="doubleBarGraph" width="400" height="200"></canvas>
+        </div>
+    </div>
+    <button id="proofsButton">Proofs</button>
+
+    <!-- Percentage Display -->
+
+    <script src="dashboard.js"></script>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        const name = urlParams.get('name'); 
+        console.log('ID extracted from URL:', userId);
+
+        const h1Element = document.querySelector('h1');
+        h1Element.textContent = `Criteria Summary of ${name}`;
+        document.addEventListener('DOMContentLoaded', function () {
+            var hod = localStorage.getItem('hod');
+           /* if(hod === '0'){
+                alert('Proofs undergoing validation. Cannot access at the moment');
+                window.location.href = 'login.html';
+                return;
+            }*/
+            // Fetch data from the server
+            fetch(`http://103.159.251.181:5000/getData?criteriaLabels=c1,c2,c3,c4,c5&userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data);
+                    updateChart(data);
+                    calculatePercentage(userId);
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing data:', error.message);
+                });
+                const proofsButton = document.getElementById('proofsButton');
+                proofsButton.addEventListener('click', () => {
+                window.location.href = `proof.html?userId=${userId}`;
+            });
+        });
+
+        function updateTable(data) {
+            const tableBody = document.querySelector('table tbody');
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            const maxScores = [65, 75, 70, 45, 45];
+            let totalMaxScores = 0;
+            let totalTargetScores = 0;
+            let totalYourScores = 0;
+            let totalAwardedScores = 0;
+            let i = 0;
+
+            // Populate the table with data
+            data.criteriaLabels.forEach(label => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = label;
+                const maxScore = maxScores[i++];
+                const targetScore = data.targetScores[data.criteriaLabels.indexOf(label)];
+                const yourScore = data.yourScores[data.criteriaLabels.indexOf(label)];
+                const awardedScore = data.awardScores[data.criteriaLabels.indexOf(label)];
+
+                row.insertCell(1).textContent = maxScore;
+                row.insertCell(2).textContent = targetScore;
+                row.insertCell(3).textContent = yourScore;
+                row.insertCell(4).textContent = awardedScore;
+
+                totalMaxScores += maxScore;
+                totalTargetScores += targetScore;
+                totalYourScores += yourScore;
+                totalAwardedScores += awardedScore;
+
+                // Add a button to each row
+                const buttonCell = row.insertCell(5);
+                const button = document.createElement('button');
+                button.textContent =`${label} Dashboard`;
+                button.addEventListener('click', () => {
+                    window.location.href = `dashboard${label}.html?userId=${userId}&name=${name}`;
+                });
+                buttonCell.appendChild(button);
+            });
+
+            // Add total row at the bottom
+            const totalRow = tableBody.insertRow();
+            totalRow.insertCell(0).textContent = 'Total';
+            totalRow.insertCell(1).textContent = totalMaxScores;
+            totalRow.insertCell(2).textContent = totalTargetScores; 
+            totalRow.insertCell(3).textContent = totalYourScores;
+            totalRow.insertCell(4).textContent = totalAwardedScores;
+            totalRow.insertCell(5).textContent = ''; // Empty cell for the button column
+        }
+
+        function updateChart(data) {
+            const ctx = document.getElementById('doubleBarGraph').getContext('2d');
+
+            // Create a double bar chart
+            const doubleBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.criteriaLabels,
+                    datasets: [
+                        {
+                            label: 'Target Score',
+                            data: data.targetScores,
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                            label: 'Claimed Score',
+                            data: data.yourScores,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                        label: 'Awarded Score',
+                        data: data.awardScores,
+                        backgroundColor: 'rgba(255, 206, 86, 0.2)', // Greenish color
+                        borderColor: 'rgba(255, 206, 86, 1)', // Greenish color
+                        borderWidth: 1,
+                    },
+                    ],
+                },
+            });
+        }
+        function calculatePercentage(userId){
+            fetch(`http://103.159.251.181:5000/getPercentage?userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let percentage = data.percentage || 0;
+                    let apercentage = data.apercentage || 0;
+                    if (percentage > 100) {
+                        percentage = 100;
+                    }
+                    const percentageDisplay = document.getElementById('percentageDisplay');
+                    percentageDisplay.textContent = `Percentage of target attainment: ${percentage.toFixed(2)}%`;
+
+                    if (apercentage > 100) {
+                        apercentage = 100;
+                    }
+                    const apercentageDisplay = document.getElementById('apercentageDisplay');
+                    apercentageDisplay.textContent = `Percentage of target attainment ( by Awarded ): ${apercentage.toFixed(2)}%`;
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing data:', error.message);
+                });
+        }
+    </script>
+</body>
+</html>

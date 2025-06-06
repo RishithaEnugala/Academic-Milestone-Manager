@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Files Table</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .download-button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .download-button:hover {
+            background-color: #45a049;
+        }
+
+        /* Custom dropdown styles */
+        .custom-dropdown-container {
+            position: relative;
+            display: inline-block;
+            width: calc(50% - 4px); /* Adjust width as per your requirement */
+            margin-right: 5px; /* Add some spacing between dropdown and submit button */
+        }
+
+        .custom-dropdown {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 5px 30px 5px 10px; /* Adjust padding to accommodate arrow */
+            border-radius: 4px;
+            cursor: pointer;
+            width: calc(100% - 10px); /* Adjust width as per your requirement */
+            font-size: 14px;
+            position: relative; /* Ensure relative positioning */
+        }
+
+        .custom-dropdown::after {
+            content: '\25BC'; /* Unicode for arrow */
+            position: absolute;
+            top: 50%;
+            right: 10px; /* Adjust position of the arrow */
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #666;
+            z-index: 1; /* Ensure the arrow appears above the dropdown */
+        }
+        
+        .custom-dropdown:focus {
+            outline: none;
+            border-color: #45a049;
+        }
+        .submit-button {
+            margin-top:10px;
+            padding: 5px 10px;
+            background-color: #45a049;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: calc(100% - 5px); /* Adjust width as per your requirement */
+        }
+
+        .submit-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Uploaded Proofs</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>S.No.</th>
+                <th>User Id</th>
+                <th>Criteria</th>
+                <th>Files</th>
+                <th>Download</th>
+                <th>Award Marks</th>
+            </tr>
+        </thead>
+        <tbody></tbody> <!-- Table body will be populated dynamically -->
+    </table>
+
+    <script>
+       
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        const criteriaMaxData = [
+            { criteria: 'c11', maxScore: 5 },
+            { criteria: 'c12', maxScore: 6 },
+            { criteria: 'c13', maxScore: 16 },
+            { criteria: 'c14', maxScore: 12 },
+            { criteria: 'c15', maxScore: 15 },
+            { criteria: 'c16', maxScore: 6 },
+            { criteria: 'c21', maxScore: 15 },
+            { criteria: 'c22', maxScore: 5 },
+            { criteria: 'c23', maxScore: 15 },
+            { criteria: 'c24', maxScore: 5 },
+            { criteria: 'c25', maxScore: 5 },
+            { criteria: 'c26', maxScore: 5 },
+            { criteria: 'c31', maxScore: 15 },
+            { criteria: 'c32', maxScore: 10 },
+            { criteria: 'c33', maxScore: 10 },
+            { criteria: 'c34', maxScore: 10 },
+            { criteria: 'c35', maxScore: 3 },
+            { criteria: 'c36', maxScore: 4 },
+            { criteria: 'c37', maxScore: 5 },
+            { criteria: 'c38', maxScore: 3 },
+            { criteria: 'c41', maxScore: 10 },
+            { criteria: 'c42', maxScore: 8 },
+            { criteria: 'c43', maxScore: 6 },
+            { criteria: 'c44', maxScore: 6 },
+            { criteria: 'c45', maxScore: 5 },
+            { criteria: 'c46', maxScore: 5 },
+            { criteria: 'c51', maxScore: 10 },
+            { criteria: 'c52', maxScore: 5 },
+            { criteria: 'c53', maxScore: 8 },
+            { criteria: 'c54', maxScore: 7 },
+            { criteria: 'c55', maxScore: 10 }
+        ];
+        let criteriaMaxMap = Object.fromEntries(criteriaMaxData.map(entry => [entry.criteria, entry.maxScore]));
+
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch(`http://103.159.251.181:5000/getProof?userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data.files); // Adjusted to access 'files' property
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing data:', error.message);
+                });
+        });
+
+        function updateTable(data) {
+    const tableBody = document.querySelector('tbody');
+    
+    // Clear existing rows
+    tableBody.innerHTML = '';
+
+    // Populate the table with data
+    data.forEach((item, index) => { // Added index parameter
+        const row = tableBody.insertRow();
+        row.insertCell(0).textContent = index + 1; // Corrected index assignment
+        row.insertCell(1).textContent = item.userId;
+        row.insertCell(2).textContent = item.columnName; 
+        row.insertCell(3).textContent = item.filename;
+        if (item.score !== 0) {
+            row.style.backgroundColor = '#a7f0a2'; // Change to green color
+        }
+
+        // Create download button
+        const buttonCell = row.insertCell(4);
+        const button = document.createElement('button');
+        button.textContent = 'Download';
+        button.className = 'download-button';
+        button.onclick = function() {
+            // Get userId and filename of the clicked row
+            const filename = encodeURIComponent(item.filename);
+            const awardMarks = dropdown.value;
+            // Send request to download endpoint
+            window.location.href = `http://103.159.251.181:5000/download?userId=${userId}&filename=${filename}`;
+        };
+        buttonCell.appendChild(button);
+
+        // Create dropdown and submit button in the same cell
+        const dropdownContainer = document.createElement('div');
+        dropdownContainer.className = 'custom-dropdown-container';
+        const dropdown = document.createElement('select');
+        dropdown.className = 'custom-dropdown'; // Adding custom dropdown class
+        const maxScore = criteriaMaxMap[item.columnName];
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Marks';
+        dropdown.appendChild(defaultOption);
+        for (let i = maxScore; i >= 0; i--) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            if (i == item.marks) { // Set the default value to item.marks
+                option.selected = true;
+            }
+            dropdown.appendChild(option);
+        }
+        dropdownContainer.appendChild(dropdown);
+
+        const submitButton = document.createElement('button');
+        submitButton.textContent = 'Submit';
+        submitButton.className = 'submit-button';
+        submitButton.onclick = function() {
+            const awardMarks = dropdown.value;
+            const criteria = item.columnName;
+            const filename = item.filename // Get the criteria of the current row
+            // Send POST request to updateAwardScore endpoint
+            fetch(`http://103.159.251.181:5000/updateAwardScore`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    criteria: criteria,
+                    awardedScore: awardMarks,
+                    filename: filename,
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Updated Award Score:', data);
+                if (data.success) {
+                    alert('Score awarded successfully!');
+                    row.style.backgroundColor = '#a7f0a2';
+                } else {
+                    throw new Error('Score awarding failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating award score:', error.message);
+            });
+        };
+        dropdownContainer.appendChild(submitButton);
+
+        const cell = row.insertCell(5); // Changed cell index to 4
+        cell.appendChild(dropdownContainer);
+    });
+}
+
+        </script>
+</body>
+</html>

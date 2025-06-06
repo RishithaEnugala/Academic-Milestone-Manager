@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%; /* Adjusted width to fit the page */
+            margin: 10px auto; /* Centering the table */
+        }
+    
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+    
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    
+        button:hover {
+            background-color: #45a049;
+        }
+        .filter-dropdown {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-dropdown label {
+            margin-right: 10px;
+        }
+
+        .filter-dropdown select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .filter-dropdown button {
+            padding: 8px 15px;
+        }
+    </style>
+    
+</head>
+<body>
+    <h1 id="facultyListHeading">Faculty List</h1> 
+    <div id="statsContainer"></div> <!-- Container for displaying statistics -->
+    <div class="filter-dropdown">
+        <label for="filterType">Select Filter Type:</label>
+        <select id="filterType">
+            <option value="criteria">Criteria</option>
+            <option value="target">Target</option>
+            <option value="awarded">Awarded</option>
+        </select>
+        
+        <button onclick="applyFilter()">Apply Filter</button>
+    </div>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>S.No.</th>
+                <th>ID</th>
+                <th>Name</th>
+                <th id="filterColumnHeader"></th> <!-- Dynamic column header for orderColumn -->
+                <th>Faculty Dashboard</th>
+            </tr>
+        </thead>
+        <tbody></tbody> 
+    </table>
+
+    <canvas id="doubleBarGraph"></canvas>
+
+    <!-- Include your dashboard.js script -->
+    <script src="dashboard.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var hod = localStorage.getItem('hod');
+            if(hod === '0'){
+                alert('Proofs undergoing validation. Cannot access at the moment');
+                window.location.href = 'login.html';
+                return;
+            }
+            fetchData('criteria');
+            fetchStats(); // Fetch stats when the page loads
+        });
+
+        function fetchStats() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dept = urlParams.get('dept');
+            fetch(`http://192.168.150.1:5000/getStatsToHoD?dept=${dept}`)
+                .then(response => response.json())
+                .then(stats => {
+                    displayStats(stats); // Display the fetched stats
+                })
+                .catch(error => {
+                    console.error('Error fetching stats:', error.message);
+                });
+        }
+
+        function displayStats(stats) {
+            const targetCount = stats.Target; 
+            const criteriaCount = stats.Criteria;
+            const awardedCount = stats.Awarded; 
+
+            // Display the fetched stats above the filter section
+            const statsContainer = document.getElementById('statsContainer');
+            statsContainer.innerHTML = `
+                <div style="font-size: 18px;">Total faculty who set target: ${targetCount}</div>
+                <div style="font-size: 18px;">Total faculty who submitted proofs: ${criteriaCount}</div>
+                <div style="font-size: 18px;margin-bottom: 20px">Total faculty who were awarded marks after proof validation: ${awardedCount}</div>
+            `;
+        }
+
+        function fetchData(filter = '') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dept = urlParams.get('dept');
+            console.log('Department extracted from URL:', dept);
+            fetch(`http://192.168.150.1:5000/getDeptDetailsToP?dept=${dept}&filter=${filter}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data.users, data.orderColumn, filter); // Pass orderColumn and filter
+                    updateHeading(dept);
+                })
+                .catch(error => {
+                    console.error('Error fetching department details:', error.message);
+                });
+        }
+
+        function applyFilter() {
+            const filterType = document.getElementById('filterType').value;
+            let filter = '';
+
+            if (filterType === 'criteria') {
+                filter = 'criteria';
+            } else if (filterType === 'target') {
+                filter = 'target';
+            } else if (filterType === 'awarded') {
+                filter = 'awarded';
+            }
+
+            fetchData(filter);
+        }
+
+        function updateTable(data, orderColumn, filter) {
+            const tableBody = document.querySelector('table tbody');
+            const userId = localStorage.getItem('userId'); // Get the userId from localStorage
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            // Populate the table with data
+            data.forEach((item, index) => {
+                const row = tableBody.insertRow();
+                const serialCell = row.insertCell(0);
+                const idCell = row.insertCell(1);
+                const nameCell = row.insertCell(2);
+                const orderColumnCell = row.insertCell(3); // Add a cell for the orderColumn
+
+                serialCell.textContent = index + 1;
+                idCell.textContent = item.id;
+                nameCell.textContent = item.name;
+                orderColumnCell.textContent = item.orderColumn === null ? '0' : item.orderColumn;
+
+                // Check if the current user's ID matches the userId from localStorage
+                if (item.id === parseInt(userId)) {
+                    serialCell.style.fontWeight = 'bold';
+                    idCell.style.fontWeight = 'bold'; // Apply bold styling to the ID cell
+                    nameCell.style.fontWeight = 'bold'; // Apply bold styling to the name cell
+                    orderColumnCell.style.fontWeight = 'bold'; // Apply bold styling to the orderColumn cell
+                }
+
+                const buttonCell = row.insertCell(4);
+                const button = document.createElement('button');
+                button.textContent = `${item.name} Dashboard`;
+                button.addEventListener('click', () => {
+                    window.location.href = `fac.html?id=${item.id}`; // Passing id as a parameter
+                });
+                buttonCell.appendChild(button);
+            });
+
+            // Set the header for the filterColumn based on the selected filter
+            const filterColumnHeader = document.getElementById('filterColumnHeader');
+            if (filter === 'target') {
+                filterColumnHeader.textContent = 'Target Value';
+            } else if (filter === 'criteria') {
+                filterColumnHeader.textContent = 'Criteria Value';
+            } else if (filter === 'awarded') {
+                filterColumnHeader.textContent = 'Awarded Value';
+            }
+        }
+
+        function updateHeading(department) {
+            const facultyListHeading = document.getElementById('facultyListHeading');
+            facultyListHeading.textContent = `Faculty List of ${department}`; // Update heading with department name
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Score Entry Table with Exam Registration</title>
+  <style>
+    /* Styles from the base code */
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 20px;
+      background-color: #f0f8ff;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      text-align: left;
+      padding: 12px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+
+    form {
+      margin: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 16px;
+    }
+
+    #error-message {
+      color: red;
+      margin-top: 8px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    select {
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    small {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #777;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .subject-radio {
+      margin-bottom: 8px;
+    }
+
+    /* Additional styles from the new code */
+    .total-score-heading {
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .total-score {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <table>
+    <thead>
+      <tr>
+        <th>S.No</th>
+        <th>Description Score Awarding Criteria</th>
+        <th>Sub Criteria</th>
+        <th>Upload(Accepted formats: PDF, Word (.doc, .docx)) Maximum file size: 5 MB</th>
+        <th>Uploaded Files</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2.1</td>
+        <td>
+          Publications in Fundamental / Applied/ Educational Research & Articles / Chapters published in Books, Published with Institute affiliation.
+          Note: The claim shall be made under only one Category for a single publication
+          <br><br>
+          <strong>20 points (max) </strong><br><br>
+          Note: In case the paper is the result of research collaboration with other Institutes/Universities, the author at the first place of the authors of this Institute gets the points mentioned.
+        </td>
+        <td>
+          <ul>
+            <li>For Q1 - first /corresponding author: 20 Points</li>
+            <li>For Q2 - second author: 10 points</li>
+            <li>For Q3 & Q4 - first / corresponding author: 5 Points</li>
+            <li>For Q3 & Q4 - second author: 3 points</li>
+            <li>For IF 5 & Above - first / corresponding author: 20 Points</li>
+            <li>For Q1 - second author: 10 points</li>
+            <li>For IF Between 2 & 5 - first / corresponding author: 10 Points</li>
+            <li>For IF Between 2 & 5 - second author: 5 points</li>
+            <li>For IF Below 2 - first / corresponding author: 5 Points</li>
+            <li>For IF Below 2 - second author: 3 points</li>
+            <li>For International Conference Indexed (Scopus /WoS) papers / National Journal indexed (Scopus/WoS) papers published as full text:</li>
+            <ul>
+              <li>For 1st /Corresponding Author: 5 points</li>
+              <li>For 2nd Author: 3 points</li>
+            </ul>
+            <li>For Articles / Chapters published in Books (Indexed)</li>
+            <ul>
+              <li>1st author – International Publishers: 5 Points</li>
+              <li>2nd author – International Publishers: 3 Points</li>
+              <li>National Reputed Publishers (Only for the 1st Author): 2 points</li>
+            </ul>
+            <li>For Publishing Text books in Elesvier, Springer, Wiley, CRC sort of publishers:</li>
+            <ul>
+              <li>1st author: 10 Points</li>
+              <li>2nd author: 5 Points</li>
+            </ul>
+            <li>For Publishing Text books in other standard publishers:</li>
+            <ul>
+              <li>1st author: 5 Points</li>
+              <li>2nd author: 3 Points</li>
+            </ul>
+          </ul>
+        </td>
+        <td>
+          <form id="examRegistrationForm1">
+            <label for="certificate1">Upload Certificate:</label>
+            <input type="file" id="certificate1" name="certificate" accept=".pdf, .doc, .docx" onchange="updateFileNames(1)" required multiple>
+            <small>Accepted formats: PDF, Word (.doc, .docx)</small>
+            <br>
+            <small>Maximum file size: 5 MB</small>
+            <div id="error-message1"></div>
+            <button type="button" onclick="validateFormAndSubmit(1)">Submit</button>
+            <button type="button" id="downloadButton" style="display: none;" onclick="downloadFile()">Download</button>
+          </form>
+        </td>
+        <td id="uploadedFileName1"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      var hod = localStorage.getItem('hod');
+    });
+
+    function updateFileNames(rowNumber) {
+      var fileInput = document.getElementById('certificate' + rowNumber);
+      var uploadedFileNameCell = document.getElementById('uploadedFileName' + rowNumber);
+      uploadedFileNameCell.innerHTML = '';
+      for (var i = 0; i < fileInput.files.length; i++) {
+        var fileName = fileInput.files[i].name;
+        uploadedFileNameCell.innerHTML += fileName + '<br>';
+      }
+    }
+
+    function validateForm(rowNumber) {
+      var fileInput = document.getElementById('certificate' + rowNumber);
+      var errorMessage = document.getElementById('error-message' + rowNumber);
+      var allowedFormats = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      var maxSize = 5 * 1024 * 1024;
+      if (fileInput.files.length === 0) {
+        errorMessage.innerHTML = 'Please select a file.';
+        return false;
+      }
+      var file = fileInput.files[0];
+      if (!allowedFormats.includes(file.type)) {
+        errorMessage.innerHTML = 'Invalid file format. Accepted formats: PDF, Word (.doc, .docx)';
+        return false;
+      }
+      if (file.size > maxSize) {
+        errorMessage.innerHTML = 'File size exceeds the maximum limit (5 MB).';
+        return false;
+      }
+      errorMessage.innerHTML = '';
+      return true;
+    }
+
+    function validateFormAndSubmit(rowNumber) {
+      var fileInput = document.getElementById('certificate' + rowNumber);
+      if (validateForm(rowNumber)) {
+        var formData = new FormData();
+        for (var i = 0; i < fileInput.files.length; i++) {
+          formData.append('certificates', fileInput.files[i]);
+        }
+        uploadFiles(formData);
+      }
+    }
+
+    function uploadFiles(formData) {
+      var userId = localStorage.getItem('userId');
+      var columnName = 'c21';
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', `http://103.159.251.181:4000/uploadFiles?userId=${userId}&columnName=${columnName}`, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            alert('Files uploaded successfully!');
+          } else {
+            alert('Failed to upload files. Status: ' + xhr.status);
+          }
+        }
+      };
+      xhr.send(formData);
+    }
+  </script>
+</body>
+
+</html>
